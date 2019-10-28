@@ -61,16 +61,3 @@ variable "vm_ip" {
 }
 
 variable "ip" {}
-
-variable "dns_ip" {
-  description = "IP address of Master DNS-Server"
-  default = "192.168.1.10"
-}
-variable "dns_key" {
-  description = "name of the DNS-Key to user"
-  default = "terraform."
-}
-variable "dns_key_secret" {
-  description = "base 64 encoded string"
-  default = "YmluZDIwMTkK"
-}

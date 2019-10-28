@@ -77,23 +77,6 @@ resource "vsphere_virtual_machine" "master" {
   }
 }
 
-resource "dns_a_record_set" "master" {
-  count = "${var.master_count}"
-  zone = "${var.domain_sufix}."
-  name = "${var.master_name}${count.index + 1}"
-  addresses = [
-    "${var.vm_ip}${var.ip + count.index + 1}",
-  ]
-}
-
-resource "dns_ptr_record" "master" {
-  count = "${var.master_count}"
-  zone = "1.168.192.in-addr.arpa."
-  name = "${var.ip + count.index + 1}"
-  ptr  = "${var.master_name}${count.index + 1}.${var.domain_sufix}."
-}
-
-
 resource "vsphere_virtual_machine" "infra" {
   count			   = "${var.infra_count}"
   name             = "${var.infra_name}${count.index + 1}"
@@ -144,22 +127,6 @@ resource "vsphere_virtual_machine" "infra" {
   }
 }
 
-resource "dns_a_record_set" "infra" {
-  count = "${var.infra_count}"
-  zone = "${var.domain_sufix}."
-  name = "${var.infra_name}${count.index + 1}"
-  addresses = [
-    "${var.vm_ip}${var.ip + var.master_count + count.index + 1}",
-  ]
-}
-
-resource "dns_ptr_record" "infra" {
-  count = "${var.infra_count}"
-  zone = "1.168.192.in-addr.arpa."
-  name = "${var.ip + var.master_count + count.index + 1}"
-  ptr  = "${var.infra_name}${count.index + 1}.${var.domain_sufix}."
-}
-
 resource "vsphere_virtual_machine" "app" {
   count			   = "${var.app_count}"
   name             = "${var.app_name}${count.index + 1}"
@@ -169,7 +136,7 @@ resource "vsphere_virtual_machine" "app" {
   scsi_type = "${data.vsphere_virtual_machine.rheltpl.scsi_type}"
 
   num_cpus = 4
-  memory   = 80192
+  memory   = 8192
   guest_id = "${var.master_guest_id}"
   network_interface {
     network_id = "${data.vsphere_network.network.id}"
@@ -210,22 +177,6 @@ resource "vsphere_virtual_machine" "app" {
   }
 }
 
-resource "dns_a_record_set" "app" {
-  count = "${var.app_count}"
-  zone = "${var.domain_sufix}."
-  name = "${var.app_name}${count.index + 1}"
-  addresses = [
-    "${var.vm_ip}${var.ip + var.master_count + var.infra_count + count.index + 1}",
-  ]
-}
-
-resource "dns_ptr_record" "app" {
-  count = "${var.app_count}"
-  zone = "1.168.192.in-addr.arpa."
-  name = "${var.ip + var.master_count + var.infra_count + count.index + 1}"
-  ptr  = "${var.app_name}${count.index + 1}.${var.domain_sufix}."
-}
-
 resource "vsphere_virtual_machine" "lb" {
   count			   = "${var.lb_count}"
   name             = "${var.lb_name}${count.index + 1}"
@@ -247,14 +198,6 @@ resource "vsphere_virtual_machine" "lb" {
 	unit_number = 0
 	thin_provisioned =  "${var.disk0_thin_provisioned}"
   }
-
-  disk {
-    label = "disk1"
-    size  = 25
-	unit_number = 1
-		thin_provisioned =  "${var.disk1_thin_provisioned}"
-  }
-
   
   clone {
     template_uuid = "${data.vsphere_virtual_machine.centostpl.id}"
@@ -274,20 +217,4 @@ resource "vsphere_virtual_machine" "lb" {
       dns_server_list = ["${var.dns_srv}"]
     }
   }
-}
-
-resource "dns_a_record_set" "lb" {
-  count = "${var.lb_count}"
-  zone = "${var.domain_sufix}."
-  name = "${var.lb_name}${count.index + 1}"
-  addresses = [
-    "${var.vm_ip}${var.ip + count.index - 1}",
-  ]
-}
-
-resource "dns_ptr_record" "lb" {
-  count = "${var.lb_count}"
-  zone = "1.168.192.in-addr.arpa."
-  name = "${var.ip + count.index - 1}"
-  ptr  = "${var.lb_name}${count.index + 1}.${var.domain_sufix}."
 }
